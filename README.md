@@ -35,7 +35,7 @@ docker compose up --build
 
 **Access Points:**
 - **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8000/api
+- **Backend API**: http://localhost:8000/swagger
 - **Admin Panel**: http://localhost:8000/admin
 - **PostgreSQL**: localhost:5432 (user: postgres, password: postgres, db: postgres)
 
