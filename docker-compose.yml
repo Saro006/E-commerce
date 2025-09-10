@@ -1,0 +1,90 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # ports:
+    #   - "5432:5432"
+
+  backend:
+    build:
+      context: ./Backend
+    environment:
+      DJANGO_SECRET_KEY: dev-insecure
+      DJANGO_DEBUG: 'true'
+      DB_ENGINE: django.db.backends.postgresql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DJANGO_ALLOWED_HOSTS: '*'
+      CORS_ALLOW_ALL: 'true'
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      # Email Settings (uncomment and configure for real email sending)
+      # EMAIL_BACKEND: django.core.mail.backends.smtp.EmailBackend
+      # EMAIL_HOST: smtp.gmail.com
+      # EMAIL_PORT: 587
+      # EMAIL_USE_TLS: 'true'
+      # EMAIL_HOST_USER: your-email@gmail.com
+      # EMAIL_HOST_PASSWORD: your-app-password
+      # DEFAULT_FROM_EMAIL: your-email@gmail.com
+
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    
+      
+  frontend:
+    build:
+      context: ./Dashboard
+      args:
+        VITE_API_BASE: http://localhost:8000/api
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  worker:
+    build:
+      context: ./Backend
+    command: celery -A Backend worker -l info
+    environment:
+      DJANGO_SECRET_KEY: dev-insecure
+      DJANGO_DEBUG: 'true'
+      DB_ENGINE: django.db.backends.postgresql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      # Email Settings (uncomment and configure for real email sending)
+      # EMAIL_BACKEND: django.core.mail.backends.smtp.EmailBackend
+      # EMAIL_HOST: smtp.gmail.com
+      # EMAIL_PORT: 587
+      # EMAIL_USE_TLS: 'true'
+      # EMAIL_HOST_USER: your-email@gmail.com
+      # EMAIL_HOST_PASSWORD: your-app-password
+      # DEFAULT_FROM_EMAIL: your-email@gmail.com
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  pgdata:
+
+
